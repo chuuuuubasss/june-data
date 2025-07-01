@@ -41,20 +41,7 @@
              }
 
              
-             #loadingBar {
-                 position:absolute;
-                 top:0px;
-                 left:0px;
-                 width: 100%;
-                 height: 2000px;
-                 background-color:rgba(200,200,200,0.8);
-                 -webkit-transition: all 0.5s ease;
-                 -moz-transition: all 0.5s ease;
-                 -ms-transition: all 0.5s ease;
-                 -o-transition: all 0.5s ease;
-                 transition: all 0.5s ease;
-                 opacity:1;
-             }
+           
 
              #bar {
                  position:absolute;
@@ -126,14 +113,7 @@
         </div>
 
         
-            <div id="loadingBar">
-              <div class="outerBorder">
-                <div id="text">0%</div>
-                <div id="border">
-                  <div id="bar"></div>
-                </div>
-              </div>
-            </div>
+      
         
         
 
@@ -156,8 +136,59 @@
               };
 
               
+		function neighbourhoodHighlight(params) {
+    if (params.nodes.length === 0) {
+        // Reset all nodes and edges to full opacity if background is clicked
+        nodes.forEach(function (node) {
+            nodes.update({ id: node.id, color: undefined });
+        });
 
-              
+        edges.get().forEach(function (edge) {
+            edges.update({
+                from: edge.from,
+                to: edge.to,
+                arrows: edge.arrows,
+                smooth: edge.smooth,
+                title: edge.title,
+                value: edge.value,
+                color: undefined,
+                width: undefined
+            });
+        });
+        return;
+    }
+
+    const selectedNode = params.nodes[0];
+    const connectedNodes = network.getConnectedNodes(selectedNode);
+    connectedNodes.push(selectedNode); // include the selected node
+
+    // Dim all nodes and then restore connected ones
+    nodes.forEach(function (node) {
+        if (connectedNodes.includes(node.id)) {
+            nodes.update({ id: node.id, color: undefined });
+        } else {
+            nodes.update({ id: node.id, color: { background: '#666', border: '#444' } });
+        }
+    });
+
+    // Dim edges that aren't connected to the selected node
+    edges.get().forEach(function (edge) {
+        const isConnected = edge.from === selectedNode || edge.to === selectedNode;
+        edges.update({
+            from: edge.from,
+            to: edge.to,
+            arrows: edge.arrows,
+            smooth: edge.smooth,
+            title: edge.title,
+            value: edge.value,
+            color: isConnected ? undefined : 'rgba(150,150,150,0.2)',
+            width: isConnected ? undefined : 0.5
+        });
+    });
+}
+
+		
+
 
               // This method is responsible for drawing the graph, returns the drawn network
               function drawGraph() {
@@ -234,7 +265,7 @@
 
                   
                       network.on("stabilizationProgress", function(params) {
-                          document.getElementById('loadingBar').removeAttribute("style");
+                          
                           var maxWidth = 496;
                           var minWidth = 20;
                           var widthFactor = params.iterations/params.total;
@@ -245,9 +276,7 @@
                       network.once("stabilizationIterationsDone", function() {
                           document.getElementById('text').innerHTML = '100%';
                           document.getElementById('bar').style.width = '496px';
-                          document.getElementById('loadingBar').style.opacity = 0;
-                          // really clean the dom element
-                          setTimeout(function () {document.getElementById('loadingBar').style.display = 'none';}, 500);
+           
                       });
                   
 
